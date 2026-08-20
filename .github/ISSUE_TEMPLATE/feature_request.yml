@@ -1,0 +1,23 @@
+name: "Idée / amélioration"
+description: "Proposer une fonctionnalité ou une amélioration"
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: need
+    attributes:
+      label: "Le besoin"
+      description: "Quel problème ça résoudrait ? Dans quel contexte / pour quel type de boutique ?"
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: "La proposition"
+      description: "Comment tu imaginerais la fonctionnalité (facultatif)."
+    validations:
+      required: false
+  - type: markdown
+    attributes:
+      value: |
+        Les pull requests sont les bienvenues — merci d'ouvrir cette issue avant les gros changements.
+        Pour un développement sur-mesure prioritaire, voir [zm40.com](https://zm40.com).

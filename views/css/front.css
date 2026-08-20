@@ -1,0 +1,160 @@
+/**
+ * CoolPlay - Styles front : vignettes façade, lecteur dans la galerie, lightbox.
+ * @license GPL-3.0-or-later
+ */
+
+/* --- Vignettes sous la galerie --- */
+.cpl-thumbs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 10px 0 0;
+}
+.cpl-thumb {
+    position: relative;
+    width: 104px;
+    aspect-ratio: 16 / 9;
+    padding: 0;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    overflow: hidden;
+    cursor: pointer;
+    background: linear-gradient(135deg, #374151, #111827);
+}
+.cpl-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+.cpl-thumb:hover .cpl-play::before,
+.cpl-thumb:focus-visible .cpl-play::before {
+    transform: scale(1.12);
+}
+
+/* Vignette déplacée dans le carrousel du thème : le JS copie les classes de
+   layout d'une vignette existante ; le bouton est fluide (width 100%,
+   height auto) et suit le responsive du carrousel comme les vignettes image. */
+.cpl-thumb-item {
+    cursor: pointer;
+    list-style: none;
+    /* Passe au-dessus des masques/flèches que certains carrousels posent
+       par-dessus les vignettes. */
+    position: relative;
+    z-index: 3;
+}
+/* Certains thèmes posent un spinner/icône en pseudo-élément centré sur chaque
+   vignette (masqué seulement pour LEUR markup <picture>) : sur notre item il
+   resterait au-dessus du bouton et avalerait le clic au centre. */
+.cpl-thumb-item::before,
+.cpl-thumb-item::after {
+    content: none !important;
+    display: none !important;
+}
+.cpl-thumb-item .cpl-thumb {
+    width: 100%;
+    height: auto;
+    aspect-ratio: auto;
+    display: block;
+}
+.cpl-thumb-item .cpl-thumb img {
+    height: auto;
+}
+
+/* Pastille play (pur CSS, aucun asset) */
+.cpl-play {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.cpl-play::before {
+    content: '';
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: rgba(220, 38, 38, 0.92);
+    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.35);
+    transition: transform 0.15s ease;
+}
+.cpl-play::after {
+    content: '';
+    position: relative;
+    left: 1px;
+    border-style: solid;
+    border-width: 6px 0 6px 10px;
+    border-color: transparent transparent transparent #fff;
+}
+
+/* Carrousels à flèches (ex. Alysum/Promokit vCarousel) : les flèches sont des
+   bandes absolues posées PAR-DESSUS la liste de vignettes et avalent les clics
+   même désactivées (preventDefault sans action). Une flèche désactivée ne
+   faisant rien, on la rend transparente aux clics : la vignette en dessous
+   (souvent la nôtre, insérée en premier) redevient entièrement cliquable. */
+.scroll-box-arrows .up.isDisabled,
+.scroll-box-arrows .down.isDisabled {
+    pointer-events: none;
+}
+
+/* --- Lecteur par-dessus l'image principale de la galerie --- */
+.cpl-hosting {
+    position: relative;
+}
+.cpl-player {
+    position: absolute;
+    inset: 0;
+    z-index: 30;
+    background: #000;
+}
+.cpl-media {
+    width: 100%;
+    height: 100%;
+    border: 0;
+    display: block;
+    object-fit: contain;
+    background: #000;
+}
+.cpl-close {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    z-index: 2;
+    width: 32px;
+    height: 32px;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(17, 24, 39, 0.75);
+    color: #fff;
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.cpl-close:hover {
+    background: rgba(17, 24, 39, 0.95);
+}
+
+/* --- Lightbox (repli thème custom / mode forcé) --- */
+.cpl-lightbox {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    background: rgba(0, 0, 0, 0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+}
+.cpl-lightbox-box {
+    position: relative;
+    width: min(1100px, 100%);
+    aspect-ratio: 16 / 9;
+    max-height: 90vh;
+    background: #000;
+    border-radius: 8px;
+    overflow: hidden;
+}
