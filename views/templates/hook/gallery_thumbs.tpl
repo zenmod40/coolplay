@@ -1,7 +1,7 @@
 {*
  * CoolPlay - Vignettes vidéo dans la galerie produit (façade click-to-load)
  * Aucun iframe, aucune requête tierce avant le clic : une image locale + CSS.
- * @license GPL-3.0-or-later
+ * @license https://opensource.org/licenses/OSL-3.0 Open Software License version 3.0
  *}
 {if $cpl_videos|@count}
     <div id="cpl-thumbs" class="cpl-thumbs">

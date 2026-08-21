@@ -5,7 +5,7 @@
  * la bande sous la galerie reste le repli pour les thèmes non reconnus.
  * Au clic : iframe youtube-nocookie (ou <video>) à la place de l'image
  * principale ; lightbox en repli ou en mode forcé.
- * @license GPL-3.0-or-later
+ * @license https://opensource.org/licenses/OSL-3.0 Open Software License version 3.0
  */
 (function () {
     'use strict';

@@ -1,6 +1,6 @@
 {*
  * CoolPlay - Page de configuration (back-office)
- * @license GPL-3.0-or-later
+ * @license https://opensource.org/licenses/OSL-3.0 Open Software License version 3.0
  *}
 {include file="./_partials/zm40_update.tpl"}
 

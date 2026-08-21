@@ -4,7 +4,7 @@
 
 Module PrestaShop de vidéos produits sans impact sur la vitesse. Les vidéos (YouTube ou fichier hébergé) s'affichent en vignettes dans la galerie de la fiche produit avec une façade click-to-load : rien n'est chargé avant le clic, ni iframe, ni script tiers, ni cookie.
 
-Compatible PrestaShop 1.7, 8 et 9. Module libre et open source sous licence GPL v3, par ZM40.
+Compatible PrestaShop 1.7, 8 et 9. Module libre et open source sous licence OSL 3.0, par ZM40.
 
 ## Pourquoi une façade click-to-load
 
@@ -58,4 +58,4 @@ Les pull requests sont les bienvenues. Merci d'ouvrir une issue avant les change
 
 ## Licence
 
-GPL v3 — voir le fichier LICENSE.
+OSL 3.0 — voir le fichier LICENSE.

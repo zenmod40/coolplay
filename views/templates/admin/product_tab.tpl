@@ -3,7 +3,7 @@
  * Autonome : styles et JS inline (le rendu de cet onglet diffère entre
  * PS 1.7 (chargement AJAX legacy) et PS 8/9 (page produit Symfony) —
  * l'inline fonctionne dans les deux cas.
- * @license GPL-3.0-or-later
+ * @license https://opensource.org/licenses/OSL-3.0 Open Software License version 3.0
  *}
 <style>
 #cpl-tab { max-width: 980px; }

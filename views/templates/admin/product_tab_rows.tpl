@@ -1,6 +1,6 @@
 {*
  * CoolPlay - Liste des vidéos d'un produit (fragment re-rendu en AJAX)
- * @license GPL-3.0-or-later
+ * @license https://opensource.org/licenses/OSL-3.0 Open Software License version 3.0
  *}
 {if $cpl_videos|@count}
     <table class="table cpl-table">

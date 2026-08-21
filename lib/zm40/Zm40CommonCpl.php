@@ -16,7 +16,7 @@
  *
  * @author    ZM40 — Nicolas Michaud (Magic Garden)
  * @copyright 2026 Nicolas Michaud — ZM40 / Magic Garden
- * @license   GPL-3.0-or-later
+ * @license   https://opensource.org/licenses/OSL-3.0 Open Software License version 3.0
  */
 
 if (!defined('_PS_VERSION_')) {
