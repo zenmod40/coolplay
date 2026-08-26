@@ -55,7 +55,11 @@
     width: 100%;
     height: auto;
     aspect-ratio: auto;
-    display: block;
+    /* inline-block et pas block : Classic met ses <li class="thumb-container">
+       en display:inline, et un bloc dans une boîte inline casse la ligne — la
+       vignette vidéo partait sur sa propre ligne au-dessus de la bande. */
+    display: inline-block;
+    vertical-align: top;
 }
 .cpl-thumb-item .cpl-thumb img {
     height: auto;
@@ -102,6 +106,11 @@
 .cpl-hosting {
     position: relative;
 }
+/* Hôte = le <picture> de la popup images : inline par défaut, il ne donnerait
+   aucune boîte au lecteur en position absolue. */
+picture.cpl-hosting {
+    display: block;
+}
 .cpl-player {
     position: absolute;
     inset: 0;
@@ -116,7 +125,8 @@
     object-fit: contain;
     background: #000;
 }
-.cpl-close {
+.cpl-close,
+.cpl-expand {
     position: absolute;
     top: 8px;
     right: 8px;
@@ -134,8 +144,14 @@
     align-items: center;
     justify-content: center;
 }
-.cpl-close:hover {
+.cpl-close:hover,
+.cpl-expand:hover {
     background: rgba(17, 24, 39, 0.95);
+}
+/* Agrandir : posé à gauche du bouton de fermeture. */
+.cpl-expand {
+    right: 48px;
+    font-size: 15px;
 }
 
 /* --- Lightbox (repli thème custom / mode forcé) --- */

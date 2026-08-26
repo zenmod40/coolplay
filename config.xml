@@ -2,7 +2,7 @@
 <module>
     <name>coolplay</name>
     <displayName><![CDATA[CoolPlay - Vidéos produits]]></displayName>
-    <version><![CDATA[1.0.0]]></version>
+    <version><![CDATA[1.0.2]]></version>
     <description><![CDATA[Vidéos YouTube ou MP4 dans la galerie produit, sans impact sur la vitesse : façade click-to-load (aucun iframe au chargement) et données structurées VideoObject pour le SEO.]]></description>
     <author><![CDATA[ZM40]]></author>
     <tab><![CDATA[front_office_features]]></tab>

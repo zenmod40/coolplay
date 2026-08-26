@@ -26,7 +26,7 @@ class CoolPlay extends Module
     {
         $this->name = 'coolplay';
         $this->tab = 'front_office_features';
-        $this->version = '1.0.1';
+        $this->version = '1.0.2';
         $this->author = 'ZM40';
         $this->need_instance = 0;
         $this->bootstrap = true;
@@ -194,6 +194,7 @@ class CoolPlay extends Module
             'cplConfig' => array(
                 'forceLightbox' => (int) Configuration::get('CPL_FORCE_LIGHTBOX'),
                 'closeLabel'    => $this->l('Fermer la vidéo'),
+                'expandLabel'   => $this->l('Agrandir la vidéo'),
             ),
         ));
 
