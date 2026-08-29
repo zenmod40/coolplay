@@ -4,6 +4,12 @@ Toutes les modifications notables de ce module sont documentées ici.
 
 Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/) et le module suit le [Versionnement sémantique](https://semver.org/lang/fr/).
 
+## [1.0.3] - 2026-08-29
+
+### Modifié
+
+- **Reformulation du panneau SEO de la page de configuration.** Son titre annonçait « pourquoi CoolPlay ne pénalise pas votre référencement » et le texte affirmait que le module « élimine le problème à la source » : une tournure défensive et un argument commercial, là où le lecteur attend une explication technique. Le panneau décrit maintenant ce que fait le chargement au clic. Les données chiffrées et les points sur les Core Web Vitals, VideoObject et le RGPD sont inchangés.
+
 ## [1.0.2] - 2026-08-26
 
 ### Ajouté

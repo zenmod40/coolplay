@@ -91,8 +91,8 @@
 
 {* Panneau SEO — sous le bloc de configuration *}
 <div class="panel">
-    <div class="panel-heading"><i class="icon-dashboard"></i> {l s='SEO et performance : pourquoi CoolPlay ne pénalise pas votre référencement' mod='coolplay'}</div>
-    <p>{l s='La mauvaise réputation SEO des vidéos vient d\'un seul problème : une iframe YouTube chargée d\'office pèse entre 800 Ko et 1,2 Mo de JavaScript tiers, avant même que le visiteur ait décidé de regarder. CoolPlay élimine ce problème à la source, et transforme la vidéo en atout de référencement.' mod='coolplay'}</p>
+    <div class="panel-heading"><i class="icon-dashboard"></i> {l s='SEO et performance : ce que le chargement au clic change' mod='coolplay'}</div>
+    <p>{l s='La mauvaise réputation SEO des vidéos vient d\'un seul problème : une iframe YouTube chargée d\'office pèse entre 800 Ko et 1,2 Mo de JavaScript tiers, avant même que le visiteur ait décidé de regarder. Ici, l\'iframe n\'est insérée qu\'au clic sur la vignette.' mod='coolplay'}</p>
     <ul style="margin:8px 0 4px 18px; line-height:1.7">
         <li><strong>{l s='Zéro impact sur la vitesse (Core Web Vitals préservés).' mod='coolplay'}</strong> {l s='Au chargement de la fiche produit, seuls une miniature JPEG servie par votre serveur et environ 2 Ko de CSS/JS sont chargés : aucune iframe, aucun script tiers, aucune requête vers YouTube. LCP, TBT et CLS restent intacts — c\'est la technique de « façade » recommandée par Google dans ses audits Lighthouse.' mod='coolplay'}</li>
         <li><strong>{l s='Résultats enrichis vidéo (VideoObject).' mod='coolplay'}</strong> {l s='Chaque fiche avec vidéo reçoit des données structurées JSON-LD (titre, description, miniature, date, URL d\'embarquement) : votre produit devient éligible aux résultats enrichis vidéo et à l\'onglet Vidéos de Google. Renseignez le titre de chaque vidéo pour en tirer le meilleur parti.' mod='coolplay'}</li>
