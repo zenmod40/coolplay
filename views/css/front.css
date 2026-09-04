@@ -38,6 +38,13 @@
 .cpl-thumb-item {
     cursor: pointer;
     list-style: none;
+    /* inline-flex : centre la vignette 16/9 dans une case carrée (grille
+       Hummingbird) comme le fait nativement un <button>, et reste en flux
+       inline pour les <li> display:inline de Classic. */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    vertical-align: top;
     /* Passe au-dessus des masques/flèches que certains carrousels posent
        par-dessus les vignettes. */
     position: relative;
@@ -63,6 +70,70 @@
 }
 .cpl-thumb-item .cpl-thumb img {
     height: auto;
+}
+
+/* Un rail de vignettes peut être un « carousel-indicators » : c'est le seul
+   endroit où Bootstrap synchronise l'état actif, et les thèmes s'en servent
+   pour ça. Bootstrap y habille en revanche tout porteur de data-bs-target en
+   trait de 30 × 3 px, avec bordures transparentes épaisses et texte décalé
+   hors champ — notre vignette s'y réduisait à une pastille tronquée. */
+.carousel-indicators .cpl-thumb {
+    box-sizing: border-box;
+    border: 1px solid #e5e7eb;
+    margin-left: 0;
+    margin-right: 0;
+    text-indent: 0;
+    background-clip: border-box;
+}
+
+/* Diapositive vidéo dans le carrousel du thème. La boîte n'est pas décrite
+   ici : elle est donnée par une copie invisible d'une image du thème
+   (.cpl-sizer), placée dans le bouton. Le navigateur applique dessus toutes les
+   règles du thème — largeur fluide, taille réelle, hauteur bornée à la fenêtre
+   dans une popup — et la façade en hérite sans qu'on ait rien à deviner. */
+.cpl-slide {
+    text-align: center;
+}
+.cpl-slide .cpl-thumb {
+    position: relative;
+    display: inline-block;
+    width: auto;
+    max-width: 100%;
+    height: auto;
+    aspect-ratio: auto;
+    border: 0;
+    border-radius: 0;
+}
+.cpl-sizer,
+.cpl-sizer img {
+    display: block;
+    visibility: hidden;
+    max-width: 100%;
+}
+/* Posée en entier, jamais recadrée : en grand format la miniature porte le
+   titre de la vidéo, et un recadrage sur une boîte carrée en coupe les bords
+   jusqu'à rendre le texte illisible.
+   Le fond de la façade passe donc au noir pour ce format. La miniature YouTube
+   (hqdefault) est un 4/3 de 480 × 360 où les bandes noires du 16/9 sont déjà
+   incrustées : un fond noir les prolonge au lieu de leur ajouter une deuxième
+   bande d'une autre couleur. */
+.cpl-slide .cpl-thumb {
+    background: #000;
+}
+.cpl-slide .cpl-thumb > img:not(.cpl-sizer) {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+.cpl-slide .cpl-play::before {
+    width: 64px;
+    height: 64px;
+}
+.cpl-slide .cpl-play::after {
+    left: 3px;
+    border-width: 12px 0 12px 20px;
 }
 
 /* Pastille play (pur CSS, aucun asset) */

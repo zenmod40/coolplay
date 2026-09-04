@@ -26,7 +26,7 @@ class CoolPlay extends Module
     {
         $this->name = 'coolplay';
         $this->tab = 'front_office_features';
-        $this->version = '1.0.3';
+        $this->version = '1.0.4';
         $this->author = 'ZM40';
         $this->need_instance = 0;
         $this->bootstrap = true;
@@ -161,7 +161,7 @@ class CoolPlay extends Module
      */
     private function configKeys()
     {
-        return array('CPL_SCHEMA', 'CPL_FORCE_LIGHTBOX');
+        return array('CPL_SCHEMA', 'CPL_FORCE_LIGHTBOX', 'CPL_THUMB_LAST');
     }
 
     private function setDefaults()
@@ -169,6 +169,7 @@ class CoolPlay extends Module
         $defaults = array(
             'CPL_SCHEMA'         => 1,
             'CPL_FORCE_LIGHTBOX' => 0,
+            'CPL_THUMB_LAST'     => 1,
             'ZM40_NET_ENABLED'   => 1,
         );
         foreach ($defaults as $k => $v) {
@@ -193,6 +194,7 @@ class CoolPlay extends Module
         Media::addJsDef(array(
             'cplConfig' => array(
                 'forceLightbox' => (int) Configuration::get('CPL_FORCE_LIGHTBOX'),
+                'thumbLast'     => (int) Configuration::get('CPL_THUMB_LAST'),
                 'closeLabel'    => $this->l('Fermer la vidéo'),
                 'expandLabel'   => $this->l('Agrandir la vidéo'),
             ),
@@ -479,7 +481,7 @@ class CoolPlay extends Module
 
     private function postProcessConfig()
     {
-        foreach (array('CPL_SCHEMA', 'CPL_FORCE_LIGHTBOX', 'ZM40_NET_ENABLED') as $k) {
+        foreach (array('CPL_SCHEMA', 'CPL_FORCE_LIGHTBOX', 'CPL_THUMB_LAST', 'ZM40_NET_ENABLED') as $k) {
             Configuration::updateValue($k, (int) Tools::getValue($k));
         }
         Zm40CommonCpl::clearFeedCache();
@@ -507,6 +509,8 @@ class CoolPlay extends Module
                         $this->l('JSON-LD injecté sur les fiches produit avec vidéo : éligibilité aux résultats enrichis vidéo de Google. Recommandé.')),
                     $onOff('CPL_FORCE_LIGHTBOX', $this->l('Toujours ouvrir en lightbox'),
                         $this->l('Par défaut la vidéo se lit à la place de l\'image principale de la galerie ; si votre thème s\'y prête mal, forcez l\'ouverture en lightbox plein écran.')),
+                    $onOff('CPL_THUMB_LAST', $this->l('Vignettes vidéo en fin de liste'),
+                        $this->l('Oui : les vignettes vidéo suivent les images du produit. Non : elles sont placées en tête de la galerie, ce qui les garde visibles sur les carrousels dont la pagination est figée au chargement.')),
                     $onOff('ZM40_NET_ENABLED', $this->l('Fonctions réseau ZM40'),
                         $this->l('Vérification de nouvelle version (API publique GitHub) et liste des autres modules ZM40. Requêtes anonymes, aucune donnée boutique transmise.')),
                 ),
@@ -524,6 +528,7 @@ class CoolPlay extends Module
         $helper->fields_value = array(
             'CPL_SCHEMA'         => Configuration::get('CPL_SCHEMA'),
             'CPL_FORCE_LIGHTBOX' => Configuration::get('CPL_FORCE_LIGHTBOX'),
+            'CPL_THUMB_LAST'     => Configuration::get('CPL_THUMB_LAST'),
             'ZM40_NET_ENABLED'   => Configuration::get('ZM40_NET_ENABLED'),
         );
 

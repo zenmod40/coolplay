@@ -1,7 +1,7 @@
 /**
  * CoolPlay - Façade click-to-load : rien n'est chargé avant le clic.
  * Les vignettes vidéo (rendues par le hook sous la galerie) sont déplacées
- * dans le carrousel de vignettes du thème (ul Classic ou swiper Hummingbird) ;
+ * dans le carrousel de vignettes du thème (ul Classic / Hummingbird, ou swiper) ;
  * la bande sous la galerie reste le repli pour les thèmes non reconnus.
  * Au clic : iframe youtube-nocookie (ou <video>) à la place de l'image
  * principale ; lightbox en repli ou en mode forcé.
@@ -56,10 +56,10 @@
         if (!current || !e.target.closest || current.node.contains(e.target)) {
             return;
         }
-        if (e.target.closest('.cpl-thumb')) {
+        if (btnFrom(e.target)) {
             return; // changement de vidéo : géré par open()
         }
-        if (e.target.closest('.thumb-container, .js-thumb, .product-thumb, ul.product-images li, .product-thumbs .swiper-slide')) {
+        if (e.target.closest('.thumb-container, .js-thumb, .js-thumb-container, .product-thumb, ul.product-images li, .product-thumbs .swiper-slide, .carousel-control-prev, .carousel-control-next, [data-bs-toggle="modal"]')) {
             close();
         }
     }
@@ -74,6 +74,9 @@
         if (current.host) {
             current.host.classList.remove('cpl-hosting');
         }
+        if (current.carousel) {
+            current.carousel.removeEventListener('slide.bs.carousel', current.onSlide);
+        }
         current = null;
         document.removeEventListener('keydown', onKey);
         document.removeEventListener('click', onDocClick, true);
@@ -83,27 +86,40 @@
      * Où poser le lecteur ? Si la vignette cliquée est dans la popup images du
      * thème, on prend la place de la GRANDE image de la popup — sinon celle de
      * l'image principale de la page.
+     *
+     * Sur un carrousel Bootstrap on vise la PISTE (.carousel-inner) et non le
+     * carrousel entier : les flèches et le bouton de zoom sont ses voisins, pas
+     * ses enfants. Recouvrir le carrousel entier les masquait, et le visiteur
+     * se retrouvait enfermé dans la vidéo, sans moyen de revenir aux images
+     * autrement qu'en cliquant une vignette.
      */
     function hostFor(btn) {
         if (cfg.forceLightbox) {
             return null;
         }
-        var modal = btn.closest('.modal, .js-product-images-modal');
-        if (modal) {
-            var big = modal.querySelector('.js-modal-product-cover, .product-cover-modal');
+        var scope = btn.closest('.modal, .js-product-images-modal');
+        if (scope) {
+            var big = scope.querySelector('.js-modal-product-cover, .product-cover-modal');
             if (big) {
                 // <picture> plutôt que <figure> : en Classic la figure contient
                 // aussi la légende (description courte), que le lecteur
                 // recouvrirait. Le picture épouse exactement l'image.
                 return big.closest('picture') || big.closest('figure') || big.parentNode;
             }
-            return modal.querySelector('.modal-body') || modal;
+            return scope.querySelector('.carousel-inner') || scope.querySelector('.modal-body') || scope;
         }
-        var sels = ['.product-cover', '.images-container', '.product-images'];
-        for (var i = 0; i < sels.length; i++) {
-            var host = document.querySelector(sels[i]);
-            if (host) {
-                return host;
+        // Hors popup, on cherche d'abord DANS le conteneur de la galerie (parent
+        // du hook) : la page peut contenir un autre .product-cover hors galerie
+        // (quick view, miniature…) qui hébergerait un lecteur invisible.
+        var sels = ['.js-product-carousel .carousel-inner', '.product-cover', '.images-container', '.product-images'];
+        var wrap = document.getElementById('cpl-thumbs');
+        var scopes = wrap && wrap.parentNode ? [wrap.parentNode, document] : [document];
+        for (var s = 0; s < scopes.length; s++) {
+            for (var i = 0; i < sels.length; i++) {
+                var host = scopes[s].querySelector(sels[i]);
+                if (host) {
+                    return host;
+                }
             }
         }
         return null;
@@ -172,6 +188,24 @@
             document.body.appendChild(box);
         }
         current = { node: box, host: host };
+
+        // Le lecteur recouvre la piste du carrousel : l'image change derrière
+        // lui sans que rien ne se voie. Tout défilement coupe donc la vidéo,
+        // quelle qu'en soit l'origine — flèches, vignette du thème, rail de la
+        // popup, clavier, glissement au doigt : Bootstrap émet le même
+        // événement pour tous. Sauf le défilement vers notre propre façade,
+        // qui est justement le clic en train d'ouvrir le lecteur.
+        var carousel = host && host.closest ? host.closest('.carousel') : null;
+        if (carousel) {
+            current.carousel = carousel;
+            current.onSlide = function (e) {
+                if (!e.relatedTarget || !e.relatedTarget.classList.contains('cpl-slide')) {
+                    close();
+                }
+            };
+            carousel.addEventListener('slide.bs.carousel', current.onSlide);
+        }
+
         document.addEventListener('keydown', onKey);
         document.addEventListener('click', onDocClick, true);
     }
@@ -294,25 +328,60 @@
         });
 
         var refItem = container.firstElementChild;
-        if (!refItem || !container.querySelector('img')) {
+        if (!refItem || !refItem.querySelector('img')) {
             return false; // produit sans image : pas de carrousel où s'insérer
         }
         // Classes de layout copiées de la vignette de référence, MAIS pas les
         // hooks de comportement (js-*, selected) : le JS du thème ne doit pas
         // considérer nos items comme des vignettes image (pas de data-image-*).
         var itemClass = refItem.className.split(/\s+/).filter(function (c) {
-            return c !== '' && c !== 'selected' && c.indexOf('js-') !== 0;
+            return c !== '' && c !== 'selected' && c !== 'active' && c.indexOf('js-') !== 0;
         }).join(' ');
+        // Hummingbird 2 met des <button> directement dans le <ul> : un bouton
+        // dans un bouton est invalide, on prend un <div> avec les mêmes classes.
+        var itemTag = refItem.tagName === 'BUTTON' ? 'div' : refItem.tagName;
 
-        // Insertion en TÊTE de liste : toujours visible même quand le carrousel
-        // du thème a déjà calculé sa pagination (flèches figées après init),
-        // et met la vidéo en avant. Itération inversée pour garder l'ordre BO.
-        buttons.slice().reverse().forEach(function (btn) {
-            var item = document.createElement(refItem.tagName);
+        // Hummingbird pilote son carrousel par les attributs Bootstrap portés
+        // par ses vignettes, et surligne la vignette active par sa POSITION dans
+        // la liste. En reprenant ces attributs, notre vignette fait défiler
+        // jusqu'à la diapositive vidéo comme n'importe quelle image, et le thème
+        // gère le surlignage tout seul. La classe js-thumb-container est
+        // indispensable : sans elle, le thème ne saurait pas retirer le
+        // surlignage de notre vignette au retour vers une image.
+        //
+        // Ces attributs vont exactement au même niveau que chez le thème : sur
+        // l'item, ou sur le bouton qu'il contient. Un rail de vignettes peut
+        // être un « carousel-indicators », où Bootstrap réduit tout porteur de
+        // data-bs-target à un trait de 30 × 3 px ; les thèmes ne défont ce style
+        // que sur l'élément où ils ont eux-mêmes posé l'attribut.
+        var slideRef = refItem.hasAttribute && refItem.hasAttribute('data-bs-slide-to')
+            ? refItem
+            : refItem.querySelector('[data-bs-slide-to]');
+        var onItem = slideRef === refItem;
+
+        // Position réglable en BO. En tête : toujours visible même quand le
+        // carrousel du thème a déjà calculé sa pagination (flèches figées après
+        // init). En queue : les images produit d'abord, la vidéo après.
+        var atEnd = !!cfg.thumbLast;
+        (atEnd ? buttons : buttons.slice().reverse()).forEach(function (btn) {
+            var item = document.createElement(itemTag);
             item.className = itemClass + ' cpl-thumb-item';
+            if (slideRef) {
+                var carrier = onItem ? item : btn;
+                carrier.classList.add('js-thumb-container');
+                carrier.setAttribute('data-bs-target', slideRef.getAttribute('data-bs-target') || '');
+                carrier.setAttribute('data-bs-slide-to', '0');
+            }
             item.appendChild(btn);
-            container.insertBefore(item, container.firstChild);
+            if (atEnd) {
+                container.appendChild(item);
+            } else {
+                container.insertBefore(item, container.firstChild);
+            }
         });
+        if (slideRef) {
+            renumber(container);
+        }
 
         var refImg = refItem.querySelector('img');
         if (refImg) {
@@ -334,6 +403,105 @@
         return true;
     }
 
+    /**
+     * Renumérote les index de diapositive Bootstrap dans l'ordre du DOM. Les
+     * thèmes écrivent ces index côté serveur (0, 1, 2…) : dès qu'on insère une
+     * diapositive, tous ceux qui suivent désignent la mauvaise image.
+     */
+    function renumber(root) {
+        Array.prototype.forEach.call(root.querySelectorAll('[data-bs-slide-to]'), function (n, i) {
+            n.setAttribute('data-bs-slide-to', i);
+        });
+    }
+
+    /**
+     * Copie invisible d'une image du thème, qui donne sa boîte à la diapositive
+     * vidéo. Une image est un élément remplacé : elle sait rester à son format
+     * sous une contrainte de hauteur, ce qu'un bloc ne sait pas faire.
+     * Le fichier est déjà en cache (c'est une image du carrousel), donc aucune
+     * requête supplémentaire.
+     */
+    function sizerFrom(refImg) {
+        // Le <picture> entier plutôt que l'image seule : sans ses <source>, le
+        // navigateur retomberait sur le JPEG alors que la page affiche le WebP,
+        // et téléchargerait donc un fichier de plus pour une copie invisible.
+        var sizer = (refImg.closest('picture') || refImg).cloneNode(true);
+        var nodes = [sizer].concat(Array.prototype.slice.call(sizer.querySelectorAll('*')));
+        nodes.forEach(function (n) {
+            Array.prototype.slice.call(n.attributes).forEach(function (a) {
+                if (a.name.indexOf('data-') === 0 || a.name === 'id') {
+                    n.removeAttribute(a.name);
+                }
+            });
+        });
+        var img = sizer.tagName === 'IMG' ? sizer : sizer.querySelector('img');
+        if (img) {
+            img.setAttribute('alt', '');
+            img.setAttribute('loading', 'eager'); // déjà en cache : c'est l'image du carrousel
+        }
+        sizer.classList.add('cpl-sizer');
+        sizer.setAttribute('aria-hidden', 'true');
+        return sizer;
+    }
+
+    /**
+     * Ajoute une diapositive-façade par vidéo dans une piste de carrousel
+     * Bootstrap (Hummingbird). La vidéo devient une diapositive comme une
+     * autre : les flèches y mènent, et la popup d'agrandissement l'affiche même
+     * lorsqu'elle n'a aucune liste de vignettes où s'insérer.
+     *
+     * Quand la popup a AUSSI un rail de vignettes, la vidéo y figure deux fois,
+     * exactement comme chaque image : une vignette pour choisir, une
+     * diapositive pour parcourir. C'est voulu — les deux chemins sont ceux du
+     * thème, la vidéo n'a pas de raison d'en emprunter un seul.
+     */
+    function insertSlides(track, buttons) {
+        if (!track) {
+            return; // thème sans carrousel Bootstrap (Classic) : rien à faire
+        }
+        Array.prototype.forEach.call(track.querySelectorAll('.cpl-slide'), function (n) {
+            n.parentNode.removeChild(n);
+        });
+
+        // La façade doit occuper exactement la boîte des images du thème, et
+        // celle-ci dépend de règles qu'un module ne peut pas deviner : largeur
+        // fluide, taille réelle de l'image, hauteur bornée à la fenêtre dans une
+        // popup, et tout cela recalculé à chaque redimensionnement. Plutôt que
+        // de reconstituer ces contraintes en CSS — format, plafond de largeur,
+        // budget de hauteur — on laisse le navigateur les appliquer : une copie
+        // invisible de l'image du thème dimensionne la diapositive, et la façade
+        // se pose par-dessus. Elle hérite ainsi de tout, y compris de ce que le
+        // thème changera demain.
+        var refImg = track.querySelector('.carousel-item img');
+
+        // Certains thèmes font pointer chaque diapositive vers la popup : nos
+        // diapositives doivent porter le même attribut, sinon la renumérotation
+        // les saute et décale tout ce qui les suit.
+        var refSlide = track.querySelector('.carousel-item[data-bs-slide-to]');
+
+        var atEnd = !!cfg.thumbLast;
+        (atEnd ? buttons : buttons.slice().reverse()).forEach(function (btn) {
+            var slide = document.createElement('div');
+            slide.className = 'carousel-item cpl-slide';
+            if (refSlide) {
+                slide.setAttribute('data-bs-target', refSlide.getAttribute('data-bs-target') || '');
+                slide.setAttribute('data-bs-slide-to', '0');
+            }
+            var clone = btn.cloneNode(true);
+            clone.removeAttribute('style'); // pas le dimensionnement vignette
+            if (refImg) {
+                clone.insertBefore(sizerFrom(refImg), clone.firstChild);
+            }
+            slide.appendChild(clone);
+            if (atEnd) {
+                track.appendChild(slide);
+            } else {
+                track.insertBefore(slide, track.firstChild);
+            }
+        });
+        renumber(track);
+    }
+
     function integrate() {
         var wrap = document.getElementById('cpl-thumbs');
         if (!wrap) {
@@ -345,16 +513,24 @@
         }
         sizings = [];
 
+        // Les diapositives d'abord : les vignettes insérées juste après portent
+        // l'index de la diapositive vidéo, qui doit donc déjà exister.
+        var gallery = wrap.parentNode || document;
+        insertSlides(gallery.querySelector('.js-product-carousel .carousel-inner'), buttons);
+        insertSlides(document.querySelector('.js-product-images-modal-carousel .carousel-inner'), buttons);
+
         // Classic et dérivés : <ul class="product-images"> de <li class="thumb-container">.
         // Il y en a DEUX sur la fiche : celle de la galerie, et celle de la popup
         // d'agrandissement des images — d'où querySelectorAll, pour que la vidéo
         // soit aussi dans le défilement de la popup.
+        // Hummingbird : carrousel Bootstrap, <ul class="thumbnails__list"> (1.x)
+        // ou <ul class="product__thumbnails-list"> (2.x) de <li> — pas de swiper.
         var lists = Array.prototype.slice.call(
-            document.querySelectorAll('ul.product-images, .js-qv-product-images')
+            document.querySelectorAll('ul.product-images, .js-qv-product-images, ul.thumbnails__list, ul.product__thumbnails-list')
         );
         var isSwiper = false;
         if (!lists.length) {
-            // Hummingbird et thèmes à swiper : slides dans .swiper-wrapper.
+            // Thèmes à swiper : slides dans .swiper-wrapper.
             var sw = document.querySelector('.product-thumbs .swiper-wrapper');
             if (sw) {
                 lists = [sw];
