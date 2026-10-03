@@ -162,12 +162,21 @@ class CplVideo extends ObjectModel
      * la fiche produit ne fait ainsi aucune requête vers YouTube avant le clic
      * (performance + RGPD). maxresdefault d'abord, hqdefault en repli.
      *
+     * @param string $ytId
+     * @param bool $gone reçoit true si YouTube répond 404 sur hqdefault, qui existe
+     *                   pour toute vidéo : la vidéo n'existe plus (ou est privée).
+     *                   Une erreur réseau laisse false : rien n'est tranché.
+     *
      * @return string nom de fichier local, ou '' (le front repliera sur i.ytimg.com)
      */
-    public static function fetchYoutubeThumb($ytId)
+    public static function fetchYoutubeThumb($ytId, &$gone = null)
     {
+        $gone = false;
         foreach (array('maxresdefault', 'hqdefault') as $quality) {
-            $data = self::httpGet('https://i.ytimg.com/vi/' . rawurlencode($ytId) . '/' . $quality . '.jpg');
+            $data = self::httpGet('https://i.ytimg.com/vi/' . rawurlencode($ytId) . '/' . $quality . '.jpg', $status);
+            if ($quality === 'hqdefault' && $status === 404) {
+                $gone = true;
+            }
             // Signature JPEG + taille plancher (élimine les placeholders/erreurs).
             if ($data !== '' && strncmp($data, "\xFF\xD8", 2) === 0 && strlen($data) > 1000) {
                 self::ensureDirs();
@@ -182,8 +191,12 @@ class CplVideo extends ObjectModel
         return '';
     }
 
-    private static function httpGet($url)
+    /**
+     * @param int $status reçoit le code HTTP (0 : pas de réponse ou code inconnu)
+     */
+    private static function httpGet($url, &$status = null)
     {
+        $status = 0;
         if (!function_exists('curl_init')) {
             $body = @Tools::file_get_contents($url, false, null, 5);
             return is_string($body) ? $body : '';
@@ -201,6 +214,7 @@ class CplVideo extends ObjectModel
         $body = curl_exec($ch);
         $code = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
+        $status = $code;
 
         return (is_string($body) && $code >= 200 && $code < 300) ? $body : '';
     }

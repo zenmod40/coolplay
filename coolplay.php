@@ -27,7 +27,7 @@ class CoolPlay extends Module
     {
         $this->name = 'coolplay';
         $this->tab = 'front_office_features';
-        $this->version = '1.1.0';
+        $this->version = '1.1.1';
         $this->author = 'ZM40';
         $this->need_instance = 0;
         $this->bootstrap = true;
@@ -398,6 +398,9 @@ class CoolPlay extends Module
         if (Tools::isSubmit('submitCplConfig')) {
             $output .= $this->postProcessConfig();
         }
+        if (Tools::isSubmit('submitCplRebuildThumbs')) {
+            $output .= $this->processRebuildThumbs();
+        }
 
         $this->context->controller->addCSS($this->_path . 'views/css/zm40-common.css');
 
@@ -407,6 +410,9 @@ class CoolPlay extends Module
             'cpl_products'       => $this->getProductsWithVideos(),
             'cpl_count_videos'   => (int) Db::getInstance()->getValue('SELECT COUNT(*) FROM `' . _DB_PREFIX_ . 'cpl_video`'),
             'cpl_count_products' => (int) Db::getInstance()->getValue('SELECT COUNT(DISTINCT id_product) FROM `' . _DB_PREFIX_ . 'cpl_video`'),
+            'cpl_thumbs_missing' => CoolPlayApi::countMissingYoutubeThumbs(),
+            'cpl_rebuild_action' => AdminController::$currentIndex . '&configure=' . $this->name,
+            'cpl_rebuild_token'  => Tools::getAdminTokenLite('AdminModules'),
             'zm40_ah_name'       => $this->displayName,
             'zm40_ah_sub'        => $this->l('Vidéos produits sans impact sur la vitesse'),
             'zm40_ah_version'    => $this->version,
@@ -428,7 +434,7 @@ class CoolPlay extends Module
         $idLang = (int) $this->context->language->id;
 
         $rows = Db::getInstance()->executeS(
-            'SELECT v.id_product, COUNT(*) AS nb, SUM(v.active) AS nb_active, pl.name
+            'SELECT v.id_product, COUNT(*) AS nb, SUM(v.active) AS nb_active, SUM(v.unavailable) AS nb_unavailable, pl.name
              FROM `' . _DB_PREFIX_ . 'cpl_video` v
              LEFT JOIN `' . _DB_PREFIX_ . 'product_lang` pl
                 ON (pl.id_product = v.id_product AND pl.id_lang = ' . $idLang . ' AND pl.id_shop = ' . $idShop . ')
@@ -440,8 +446,10 @@ class CoolPlay extends Module
             return array();
         }
 
+        $noThumb = CoolPlayApi::missingYoutubeThumbsByProduct($idShop);
         foreach ($rows as &$row) {
             $id = (int) $row['id_product'];
+            $row['nb_no_thumb'] = isset($noThumb[$id]) ? $noThumb[$id] : 0;
             // Lien d'édition produit : LinkCore mappe lui-même vers la bonne
             // route Symfony selon la version (1.7 / 8 / 9).
             try {
@@ -488,6 +496,67 @@ class CoolPlay extends Module
         Zm40CommonCpl::clearFeedCache();
 
         return $this->displayConfirmation($this->l('Paramètres enregistrés.'));
+    }
+
+    /**
+     * Bouton de maintenance « Reconstruire les miniatures YouTube » :
+     * rapport du traitement ligne par ligne (voir CoolPlayApi::rebuildYoutubeThumbs).
+     */
+    private function processRebuildThumbs()
+    {
+        $stats = CoolPlayApi::rebuildYoutubeThumbs();
+        $n = function ($count, $one, $many) {
+            return sprintf($count > 1 ? $many : $one, $count);
+        };
+
+        $done = array();
+        if ($stats['rebuilt'] > 0) {
+            $done[] = $n($stats['rebuilt'], $this->l('%d miniature YouTube reconstruite.'), $this->l('%d miniatures YouTube reconstruites.'));
+        }
+        if ($stats['skipped'] > 0) {
+            $done[] = $n($stats['skipped'], $this->l('%d miniature déjà présente sur le serveur.'), $this->l('%d miniatures déjà présentes sur le serveur.'));
+        }
+
+        // Références échappées, dédupliquées et tronquées : elles viennent de la
+        // base telles qu'importées, sans contrôle de format.
+        $refs = function (array $list) {
+            return implode(' ', array_map('htmlspecialchars', array_slice(array_unique($list), 0, 10)));
+        };
+        $warn = array();
+        if (!empty($stats['unavailable'])) {
+            $warn[] = $n(
+                count($stats['unavailable']),
+                $this->l('%d vidéo introuvable sur YouTube (supprimée ou privée) : désactivée, elle n\'apparaît plus en boutique. Repérez-la dans l\'onglet Produits avec vidéos pour la remplacer :'),
+                $this->l('%d vidéos introuvables sur YouTube (supprimées ou privées) : désactivées, elles n\'apparaissent plus en boutique. Repérez-les dans l\'onglet Produits avec vidéos pour les remplacer :')
+            ) . ' ' . $refs($stats['unavailable']);
+        }
+        if (!empty($stats['failed'])) {
+            // YouTube n'a pas répondu : rien n'est tranché, le front replie sur
+            // i.ytimg.com et un prochain clic retentera.
+            $warn[] = $n(
+                count($stats['failed']),
+                $this->l('%d vidéo sans réponse de YouTube (serveur injoignable) : réessayez plus tard.'),
+                $this->l('%d vidéos sans réponse de YouTube (serveur injoignable) : réessayez plus tard.')
+            ) . ' ' . $refs($stats['failed']);
+        }
+        if ($stats['remaining'] > 0) {
+            $warn[] = $n(
+                $stats['remaining'],
+                $this->l('%d vidéo restante pour respecter la limite de temps du serveur : cliquez à nouveau sur le bouton pour continuer.'),
+                $this->l('%d vidéos restantes pour respecter la limite de temps du serveur : cliquez à nouveau sur le bouton pour continuer.')
+            );
+        }
+
+        if (empty($done) && empty($warn)) {
+            return $this->displayConfirmation($this->l('Aucune vidéo YouTube à traiter.'));
+        }
+
+        $output = $done ? $this->displayConfirmation(implode(' ', $done)) : '';
+        if ($warn) {
+            $output .= $this->displayWarning(implode('<br>', $warn));
+        }
+
+        return $output;
     }
 
     private function renderConfigForm()

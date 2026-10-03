@@ -28,6 +28,7 @@ $sql[] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'cpl_video` (
     `thumb` VARCHAR(255) NOT NULL DEFAULT \'\',
     `position` INT(11) UNSIGNED NOT NULL DEFAULT 0,
     `active` TINYINT(1) NOT NULL DEFAULT 1,
+    `unavailable` TINYINT(1) NOT NULL DEFAULT 0,
     `date_add` DATETIME NOT NULL,
     `date_upd` DATETIME NOT NULL,
     PRIMARY KEY (`id_cpl_video`),

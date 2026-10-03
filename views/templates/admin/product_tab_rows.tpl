@@ -42,6 +42,9 @@
                         <button type="button" class="cpl-btn{if !$v.active} cpl-badge-off{/if}" data-act="toggle" data-id="{$v.id_cpl_video|intval}">
                             {if $v.active}{l s='Visible' mod='coolplay'}{else}{l s='Masquée' mod='coolplay'}{/if}
                         </button>
+                        {if !empty($v.unavailable)}
+                            <span class="cpl-badge cpl-badge-off" title="{l s='Désactivée automatiquement : YouTube ne trouve plus cette vidéo (supprimée ou privée).' mod='coolplay'}">{l s='Introuvable sur YouTube' mod='coolplay'}</span>
+                        {/if}
                     </td>
                     <td>
                         <button type="button" class="cpl-btn cpl-btn-danger" data-act="del" data-id="{$v.id_cpl_video|intval}">{l s='Supprimer' mod='coolplay'}</button>
