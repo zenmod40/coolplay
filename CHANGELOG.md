@@ -4,7 +4,7 @@ Toutes les modifications notables de ce module sont documentées ici.
 
 Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/) et le module suit le [Versionnement sémantique](https://semver.org/lang/fr/).
 
-## [1.1.1] - non publiée
+## [1.1.1] - 2026-10-03
 
 ### Ajouté
 
