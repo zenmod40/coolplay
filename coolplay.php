@@ -27,7 +27,7 @@ class CoolPlay extends Module
     {
         $this->name = 'coolplay';
         $this->tab = 'front_office_features';
-        $this->version = '1.1.1';
+        $this->version = '1.1.2';
         $this->author = 'ZM40';
         $this->need_instance = 0;
         $this->bootstrap = true;
@@ -401,12 +401,18 @@ class CoolPlay extends Module
         if (Tools::isSubmit('submitCplRebuildThumbs')) {
             $output .= $this->processRebuildThumbs();
         }
+        if (Tools::isSubmit('submitCplNet')) {
+            Configuration::updateValue('ZM40_NET_ENABLED', (int) Tools::getValue('ZM40_NET_ENABLED'));
+            Zm40CommonCpl::clearFeedCache();
+            $output .= $this->displayConfirmation($this->l('Paramètres enregistrés.'));
+        }
 
         $this->context->controller->addCSS($this->_path . 'views/css/zm40-common.css');
 
         $this->assignZm40();
         $this->context->smarty->assign(array(
             'cpl_form'           => $this->renderConfigForm(),
+            'cpl_form_net'       => $this->renderNetForm(),
             'cpl_products'       => $this->getProductsWithVideos(),
             'cpl_count_videos'   => (int) Db::getInstance()->getValue('SELECT COUNT(*) FROM `' . _DB_PREFIX_ . 'cpl_video`'),
             'cpl_count_products' => (int) Db::getInstance()->getValue('SELECT COUNT(DISTINCT id_product) FROM `' . _DB_PREFIX_ . 'cpl_video`'),
@@ -490,10 +496,9 @@ class CoolPlay extends Module
 
     private function postProcessConfig()
     {
-        foreach (array('CPL_SCHEMA', 'CPL_FORCE_LIGHTBOX', 'CPL_THUMB_LAST', 'ZM40_NET_ENABLED') as $k) {
+        foreach (array('CPL_SCHEMA', 'CPL_FORCE_LIGHTBOX', 'CPL_THUMB_LAST') as $k) {
             Configuration::updateValue($k, (int) Tools::getValue($k));
         }
-        Zm40CommonCpl::clearFeedCache();
 
         return $this->displayConfirmation($this->l('Paramètres enregistrés.'));
     }
@@ -581,8 +586,6 @@ class CoolPlay extends Module
                         $this->l('Par défaut la vidéo se lit à la place de l\'image principale de la galerie ; si votre thème s\'y prête mal, forcez l\'ouverture en lightbox plein écran.')),
                     $onOff('CPL_THUMB_LAST', $this->l('Vignettes vidéo en fin de liste'),
                         $this->l('Oui : les vignettes vidéo suivent les images du produit. Non : elles sont placées en tête de la galerie, ce qui les garde visibles sur les carrousels dont la pagination est figée au chargement.')),
-                    $onOff('ZM40_NET_ENABLED', $this->l('Fonctions réseau ZM40'),
-                        $this->l('Vérification de nouvelle version (API publique GitHub) et liste des autres modules ZM40. Requêtes anonymes, aucune donnée boutique transmise.')),
                 ),
                 'submit' => array('title' => $this->l('Enregistrer')),
             ),
@@ -599,8 +602,38 @@ class CoolPlay extends Module
             'CPL_SCHEMA'         => Configuration::get('CPL_SCHEMA'),
             'CPL_FORCE_LIGHTBOX' => Configuration::get('CPL_FORCE_LIGHTBOX'),
             'CPL_THUMB_LAST'     => Configuration::get('CPL_THUMB_LAST'),
-            'ZM40_NET_ENABLED'   => Configuration::get('ZM40_NET_ENABLED'),
         );
+
+        return $helper->generateForm(array($fields_form));
+    }
+
+    /** Interrupteur réseau, en bas de l'onglet « Modules ZM40 ». */
+    private function renderNetForm()
+    {
+        $fields_form = array(
+            'form' => array(
+                'legend' => array('title' => $this->l('Modules ZM40'), 'icon' => 'icon-globe'),
+                'input' => array(array(
+                    'type' => 'switch', 'name' => 'ZM40_NET_ENABLED', 'is_bool' => true,
+                    'label' => $this->l('Vérifier les mises à jour et actualiser la liste des modules ZM40'),
+                    'desc' => $this->l('Une fois par jour au plus, une requête anonyme vers zm40.com met la liste à jour et GitHub donne la dernière version. Désactivé, la liste reste affichée telle quelle. Aucune donnée de la boutique n\'est transmise.'),
+                    'values' => array(
+                        array('id' => 'ZM40_NET_ENABLED_on', 'value' => 1, 'label' => $this->l('Oui')),
+                        array('id' => 'ZM40_NET_ENABLED_off', 'value' => 0, 'label' => $this->l('Non')),
+                    ),
+                )),
+                'submit' => array('title' => $this->l('Enregistrer')),
+            ),
+        );
+
+        $helper = new HelperForm();
+        $helper->module = $this;
+        $helper->name_controller = $this->name;
+        $helper->token = Tools::getAdminTokenLite('AdminModules');
+        $helper->currentIndex = AdminController::$currentIndex . '&configure=' . $this->name;
+        $helper->submit_action = 'submitCplNet';
+        $helper->default_form_language = (int) $this->context->language->id;
+        $helper->fields_value = array('ZM40_NET_ENABLED' => Zm40CommonCpl::isNetEnabled() ? 1 : 0);
 
         return $helper->generateForm(array($fields_form));
     }

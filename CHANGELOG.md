@@ -4,6 +4,13 @@ Toutes les modifications notables de ce module sont documentées ici.
 
 Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/) et le module suit le [Versionnement sémantique](https://semver.org/lang/fr/).
 
+## [1.1.2] - 2026-10-07
+
+### Modifié
+
+- **Onglet « Modules ZM40 » toujours présent**, comme sur les autres modules ZM40 : la liste des modules d'abord, puis l'interrupteur réseau, qui quitte le formulaire de configuration.
+- **Interrupteur réseau coupé : la liste des modules reste affichée.** Il arrête seulement sa mise à jour depuis zm40.com ; avant, la liste disparaissait. Composant commun ZM40 1.4, qui n'affiche plus non plus le module dans sa propre liste.
+
 ## [1.1.1] - 2026-10-03
 
 ### Ajouté

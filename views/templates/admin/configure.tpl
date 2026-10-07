@@ -28,14 +28,10 @@
     {l s='Les vidéos se gèrent directement sur chaque fiche produit, dans le bloc CoolPlay affiché sous la zone d\'images.' mod='coolplay'}
 </div>
 
-{assign var=zm40_has_modules value=(isset($zm40_modules) && $zm40_modules|@count)}
-
 <ul class="nav nav-tabs" id="cpl-config-tabs">
     <li class="active"><a href="#cpl-tab-config" data-toggle="tab"><i class="icon-cogs"></i> {l s='Configuration' mod='coolplay'}</a></li>
     <li><a href="#cpl-tab-products" data-toggle="tab"><i class="icon-film"></i> {l s='Produits avec vidéos' mod='coolplay'} ({$cpl_products|@count})</a></li>
-    {if $zm40_has_modules}
-        <li><a href="#cpl-tab-modules" data-toggle="tab"><i class="icon-th-large"></i> {l s='Modules ZM40' mod='coolplay'}</a></li>
-    {/if}
+    <li><a href="#cpl-tab-modules" data-toggle="tab"><i class="icon-th-large"></i> {l s='Modules ZM40' mod='coolplay'}</a></li>
 </ul>
 <div class="tab-content" style="padding-top:15px;">
     <div class="tab-pane active" id="cpl-tab-config">
@@ -89,11 +85,14 @@
             {/if}
         </div>
     </div>
-    {if $zm40_has_modules}
-        <div class="tab-pane" id="cpl-tab-modules">
+    <div class="tab-pane" id="cpl-tab-modules">
+        {if isset($zm40_modules) && $zm40_modules|@count}
             {include file="./_partials/zm40_modules.tpl"}
-        </div>
-    {/if}
+        {else}
+            <div class="panel"><p style="margin:0">{l s='Aucun module à afficher pour le moment.' mod='coolplay'}</p></div>
+        {/if}
+        {$cpl_form_net nofilter}
+    </div>
 </div>
 
 {* Panneau SEO — sous le bloc de configuration *}
@@ -131,3 +130,12 @@
 {include file="./_partials/zm40_panel.tpl"}
 
 {include file="./_partials/zm40_footer.tpl"}
+
+{if isset($smarty.post.submitCplNet)}
+<script>
+    {* Après l'enregistrement de l'interrupteur, rester sur l'onglet Modules ZM40. *}
+    document.addEventListener('DOMContentLoaded', function () {
+        if (window.jQuery) { jQuery('#cpl-config-tabs a[href="#cpl-tab-modules"]').tab('show'); }
+    });
+</script>
+{/if}

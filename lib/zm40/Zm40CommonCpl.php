@@ -29,7 +29,7 @@ if (class_exists('Zm40CommonCpl', false)) {
 
 class Zm40CommonCpl
 {
-    const VERSION   = '1.3';
+    const VERSION   = '1.4';
     const SITE      = 'https://zm40.com';
     const FEED_URL  = 'https://zm40.com/feed/modules-v2.json'; // v2 : OS + Pro avec metadata enrichi
     const GH_ORG    = 'zenmod40';
@@ -158,33 +158,31 @@ class Zm40CommonCpl
      */
     public static function clearFeedCache()
     {
-        Configuration::updateValue('ZM40_FEED_CACHE_TS', 0);
+        Configuration::updateValue('ZM40_FEED_CACHE_TS2', 0);
     }
 
     /**
      * Bloc « Autres modules ZM40 » depuis le JSON curé sur zm40.com. Cache 24 h.
      * Exclut le module courant. Fail-silent (retourne [] si injoignable).
+     * Réseau coupé (ZM40_NET_ENABLED) : plus de rafraîchissement, mais la liste
+     * déjà en cache reste affichée.
      *
      * @param string $excludeSlug
      * @return array  liste de modules [{slug,name,tagline,url,icon,github}, ...]
      */
     public static function modulesFeed($excludeSlug)
     {
-        if (!self::isNetEnabled()) {
-            return array();
-        }
-
         $now   = time();
-        $ts    = (int) Configuration::get('ZM40_FEED_CACHE_TS');
-        $cache = (string) Configuration::get('ZM40_FEED_CACHE');
+        $ts    = (int) Configuration::get('ZM40_FEED_CACHE_TS2');
+        $cache = (string) Configuration::get('ZM40_FEED_CACHE2');
 
-        if (($now - $ts) >= self::CACHE_TTL || $cache === '') {
+        if (self::isNetEnabled() && (($now - $ts) >= self::CACHE_TTL || $cache === '')) {
             $body = self::httpGet(self::FEED_URL);
             if ($body !== '') {
                 $cache = $body;
-                Configuration::updateValue('ZM40_FEED_CACHE', $cache);
+                Configuration::updateValue('ZM40_FEED_CACHE2', $cache);
             }
-            Configuration::updateValue('ZM40_FEED_CACHE_TS', $now); // throttle
+            Configuration::updateValue('ZM40_FEED_CACHE_TS2', $now); // throttle
         }
 
         $data = json_decode($cache, true);
@@ -201,7 +199,10 @@ class Zm40CommonCpl
             } elseif (isset($m['module']) && $m['module'] !== '') {
                 $slug = (string) $m['module'];
             }
-            if ($slug === '' || $slug === $excludeSlug) {
+            // Le module courant est exclu par slug du site OU par nom technique :
+            // les deux diffèrent pour certains modules (faq-avancee / advancedfaq).
+            if ($slug === '' || $slug === $excludeSlug
+                || (isset($m['module']) && $m['module'] === $excludeSlug)) {
                 continue;
             }
             // v1 rétro-compat : 'url'. v2 : 'landing_url' (canonique). Privilégie v2.
